@@ -11,6 +11,12 @@ from kivy.logger import Logger
 
 import math
 
+def clamp(min_val, max_val, value):
+    return max(min_val, min(max_val, value))
+
+def clamp_iter(min_val, max_val, iter):
+    return [clamp(min_val, max_val, val) for val in iter]
+
 class PongPaddle(Widget):
     score = NumericProperty(0)
     velocity = NumericProperty(0)
@@ -23,21 +29,21 @@ class PongPaddle(Widget):
         if self.collide_widget(ball):
             vx, vy = ball.velocity
             offset = (ball.center_y-self.center_y)/(self.height/2)
-            curve = (ball.center_y - self.center_y) / (self.height / 2)
             bounced = Vector(-1*vx, vy)
-            vel = bounced * 1.1
-            ball.velocity = vel.x + curve, vel.y + offset
+            vel = bounced * 1.05
+            max_velocity = self.width
+            ball.velocity = clamp_iter(-max_velocity, max_velocity, (vel.x, vel.y + offset))
 
     def update(self):
-        if self.center_y == self.target_pos:
+        if abs(self.center_y - self.target_pos) <= self.speed:
             self.stop()
         if self.target_pos == -1 or self.speed == 0:
             return
-        self.velocity = (self.target_pos - self.center_y)  / self.speed
+        self.velocity = (self.target_pos - self.center_y)  / abs(self.target_pos - self.center_y) * self.speed
         self.pos = Vector(0, self.velocity) + self.pos
 
     def start_move_to(self, target):
-        self.target_pos = max(self.height / 2, min(target, self.get_root_window().height - self.height / 2))
+        self.target_pos = clamp(self.height / 2, self.get_root_window().height - self.height / 2, target)
 
     def stop(self):
         self.target_pos = -1
@@ -72,7 +78,8 @@ class PongGame(Widget):
     def update(self, *args):
         self.ball.update()
         self.player1.update()
-        self.player2.handle_input(self.ball.center_x, self.ball.center_y)
+        if self.ball.center_x > self.center[0]:
+            self.player2.handle_input(self.ball.center_x, self.ball.center_y)
         self.player2.update()
 
         #bounce of paddles
@@ -96,16 +103,10 @@ class PongGame(Widget):
         self.on_touch_move(touch)
 
     def on_touch_move(self, touch):
-        if touch.x < self.width/2:
-            self.player1.handle_touch(touch)
-        if touch.x > self.width/2:
-            self.player2.handle_touch(touch)
+        self.player1.handle_touch(touch)
 
     def on_touch_up(self, touch):
-        if touch.x < self.width / 2:
-            self.player1.velocity = 0
-        if touch.x > self.width  / 2:
-            self.player2.velocity = 0
+        self.player1.velocity = 0
 
 
 Factory.register("PongBall", PongBall)
