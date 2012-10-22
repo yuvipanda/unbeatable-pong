@@ -72,6 +72,7 @@ class PongGame(Widget):
     def update(self, *args):
         self.ball.update()
         self.player1.update()
+        self.player2.handle_input(self.ball.center_x, self.ball.center_y)
         self.player2.update()
 
         #bounce of paddles
