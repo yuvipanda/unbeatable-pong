@@ -14,9 +14,9 @@ import math
 class PongPaddle(Widget):
     score = NumericProperty(0)
     velocity = NumericProperty(0)
-    target_pos = NumericProperty(0)
+    target_pos = NumericProperty(-1)
 
-    # Larger this is, slower ball gets
+    # Larger this is, slower bat gets
     speed = NumericProperty(4)
 
     def bounce_ball(self, ball):
@@ -28,28 +28,35 @@ class PongPaddle(Widget):
             vel = bounced * 1.1
             ball.velocity = vel.x + curve, vel.y + offset
 
-    def move(self):
+    def update(self):
         if self.center_y == self.target_pos:
-            self.target_pos = -1
+            self.stop()
         if self.target_pos == -1 or self.speed == 0:
             return
         self.velocity = (self.target_pos - self.center_y)  / self.speed
         self.pos = Vector(0, self.velocity) + self.pos
 
-    def handle_touch(self, touch):
-        if touch.y == self.center_y:
-            self.target_pos = -1
+    def start_move_to(self, target):
+        self.target_pos = max(self.height / 2, min(target, self.get_root_window().height - self.height / 2))
+
+    def stop(self):
+        self.target_pos = -1
+
+    def handle_input(self, x, y):
+        if y == self.center_y:
+            self.stop()
         else:
-            target_pos = touch.y
-            self.target_pos = target_pos
-            Logger.debug("Speed: %s" % self.speed)
+            self.start_move_to(y)
+
+    def handle_touch(self, touch):
+        self.handle_input(touch.x, touch.y)
 
 class PongBall(Widget):
     velocity_x = NumericProperty(0)
     velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
 
-    def move(self):
+    def update(self):
         self.pos = Vector(*self.velocity) + self.pos
 
 
@@ -63,9 +70,9 @@ class PongGame(Widget):
         self.ball.velocity = vel
 
     def update(self, *args):
-        self.ball.move()
-        self.player1.move()
-        self.player2.move()
+        self.ball.update()
+        self.player1.update()
+        self.player2.update()
 
         #bounce of paddles
         self.player1.bounce_ball(self.ball)
