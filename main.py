@@ -16,7 +16,8 @@ class PongPaddle(Widget):
     velocity = NumericProperty(0)
     target_pos = NumericProperty(0)
 
-    speed = NumericProperty(0)
+    # Larger this is, slower ball gets
+    speed = NumericProperty(4)
 
     def bounce_ball(self, ball):
         if self.collide_widget(ball):
@@ -32,7 +33,7 @@ class PongPaddle(Widget):
             self.target_pos = -1
         if self.target_pos == -1 or self.speed == 0:
             return
-        self.velocity = (self.target_pos - self.center_y)  / (4 / self.speed)
+        self.velocity = (self.target_pos - self.center_y)  / self.speed
         self.pos = Vector(0, self.velocity) + self.pos
 
     def handle_touch(self, touch):
@@ -41,7 +42,6 @@ class PongPaddle(Widget):
         else:
             target_pos = touch.y
             self.target_pos = target_pos
-            self.speed = abs(self.center_y - target_pos) / self.get_root_window().height
             Logger.debug("Speed: %s" % self.speed)
 
 class PongBall(Widget):
