@@ -39,7 +39,7 @@ class PongPaddle(Widget):
             self.stop()
         if self.target_pos == -1 or self.speed == 0:
             return
-        self.velocity = (self.target_pos - self.center_y)  / abs(self.target_pos - self.center_y) * self.speed
+        self.velocity = (self.target_pos - self.center_y)  / self.speed
         self.pos = Vector(0, self.velocity) + self.pos
 
     def start_move_to(self, target):
@@ -47,7 +47,6 @@ class PongPaddle(Widget):
 
     def stop(self):
         self.target_pos = -1
-
     def handle_input(self, x, y):
         if y == self.center_y:
             self.stop()
@@ -78,8 +77,6 @@ class PongGame(Widget):
     def update(self, *args):
         self.ball.update()
         self.player1.update()
-        if self.ball.center_x > self.center[0]:
-            self.player2.handle_input(self.ball.center_x, self.ball.center_y)
         self.player2.update()
 
         #bounce of paddles
@@ -99,14 +96,20 @@ class PongGame(Widget):
             self.serve_ball(vel=(-4,0))
 
 
-    def on_touch_down(self, touch):
-        self.on_touch_move(touch)
-
     def on_touch_move(self, touch):
-        self.player1.handle_touch(touch)
+        if touch.x < self.width/2:
+            self.player1.handle_touch(touch)
+        if touch.x > self.width/2:
+            self.player2.handle_touch(touch)
 
     def on_touch_up(self, touch):
-        self.player1.velocity = 0
+        if touch.x < self.width / 2:
+            self.player1.velocity = 0
+        if touch.x > self.width  / 2:
+            self.player2.velocity = 0
+
+    def on_touch_down(self, touch):
+        self.on_touch_move(touch)
 
 
 Factory.register("PongBall", PongBall)
